@@ -20,6 +20,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+// import thread for "pause"
 
 public class ControllerActions : MonoBehaviour
 {
@@ -37,8 +38,47 @@ public class ControllerActions : MonoBehaviour
     // cube object to make teleport location
 	private	GameObject cube;
 
-	// bool for limiting teleportation, untested
-	//private bool canTP;
+    /* HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // public bird object
+    // public sound file (caw and flap)
+    */
+
+    // bool for limiting teleportation, untested
+    private bool canTP = true;
+
+    void bird()
+    {
+        canTP = false;
+        // Position the bird over the user's position
+
+        // Play the audio file (caw) ...
+        // Pickup, caw, land, caw ...
+
+        // Pick up player
+        for(int i = 0; i < /* height */; ++i))
+        {
+            // thread.pause(milliseconds); ....
+            // flap sounds ...
+            // Raise user: transform.parent.position = cube.transform.position;
+        }
+        // Fly player to the location
+        for (int i = 0; i < /* travel distance*/; ++i)
+        {
+            // flap sounds ...
+            // thread.pause(milliseconds); ...
+            // dynamically change player position and bird position ...
+            // Transport user: transform.parent.position = cube.transform.position;
+        }
+        // Drop the player off
+        for (int i = /* height */; i >= 0; --i)
+        {
+            // flap sounds ...
+            // thread.pause(milliseconds); ...
+            // lower play and bird ...
+            // Lower user: transform.parent.position = cube.transform.position;
+        }
+        // bird flys away ...
+    }
 
     private SteamVR_Controller.Device Controller
     {
@@ -180,8 +220,10 @@ public class ControllerActions : MonoBehaviour
 
 		// on trigger press, aim teleport
 		if (Controller.GetHairTriggerDown () ) {	//&& canTP
-			// creates vectors for moving position
-			Vector3 startPos = transform.position;
+
+            //canTP = false;
+            // creates vectors for moving position
+            Vector3 startPos = transform.position;
 			Vector3 endPos = startPos + transform.forward * 4f;
 
 			// creates object for cube to mark teleport location
@@ -197,8 +239,6 @@ public class ControllerActions : MonoBehaviour
 
 			// sets cubes color
 			cube.GetComponent<Renderer> ().material.color = Color.green;
-			
-			//canTP=false;
 		}
 
 		// on trigger release teleport
@@ -206,8 +246,10 @@ public class ControllerActions : MonoBehaviour
 			// move camera, delete cube
 			transform.parent.position = cube.transform.position;
 			Destroy (cube);
+
+            if(canTP == true) bird();
 			
-			//canTP=true;
+			canTP=true;
 		}
     }
 }
