@@ -52,13 +52,14 @@ public class ControllerActions : MonoBehaviour
         canTP = false;
         // Position the bird over the user's position
         Vector3 birdPos = transform.parent.position;
+        Vector3 userPos = transform.parent.position;
         birdPos += new Vector3(0, 5f, 0);
 
         // Bird Caw's
         caw.Play();
         
         // Bird Picks up player
-        for (float i = 0.5f; i < 10.5; i += 2)
+        for (float i = 0.5f; i < 9.5; i += 3)
         {
             Thread.Sleep(500);
             // Bird flaps
@@ -70,17 +71,30 @@ public class ControllerActions : MonoBehaviour
             transform.parent.position += new Vector3(0, i, 0);
         }
 
-        // Fly player to the location
-        //for (int i = 0; i < /* travel distance*/; ++i)
-        //{
-        // flap sounds ...
-        // thread.pause(milliseconds); ...
-        // dynamically change player position and bird position ...
-        // Transport user: transform.parent.position = cube.transform.position;
-        //}
+        // Get the travel distance
+        Vector3 destination = cube.transform.position;
+
+
+        // Fly player to the location in 5 iterations
+        for (float i = 5; i >= 1; --i)
+        {
+            // bird flaps
+            flap.Play();
+            Thread.Sleep(500);
+            // change player position
+            userPos.x = destination.x / i;
+            userPos.z = destination.z / i;
+            // change bird position in x and z direction
+            birdPos.x = destination.x / i;
+            birdPos.z = destination.z / i;
+
+            // Update user and bird positions
+            transform.parent.position = userPos;
+            bird.transform.position = birdPos;
+        }
 
         // Drop the player off
-        for (float i = 10.5f; i >= 0.5f; i -= 2)
+        for (float i = 9.5f; i >= 0.5f; i -= 3)
         {
             // bird flaps
             flap.Play();
@@ -97,7 +111,7 @@ public class ControllerActions : MonoBehaviour
         caw.Play();
 
         // Hide the bird
-        bird.transform.position = new Vector3(-2f, 10f, -30f);
+        bird.transform.position = new Vector3(-.2f, 10, -30);
     }
 
     private SteamVR_Controller.Device Controller
@@ -264,7 +278,7 @@ public class ControllerActions : MonoBehaviour
 		// on trigger release teleport
 		if (Controller.GetHairTriggerUp ()) {
 			// move camera, delete cube
-			transform.parent.position = cube.transform.position;
+			//transform.parent.position = cube.transform.position;
 			Destroy (cube);
 
             if(canTP == true) birdMove();
