@@ -20,7 +20,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-// import thread for "pause"
+using System.Threading;
 
 public class ControllerActions : MonoBehaviour
 {
@@ -38,46 +38,66 @@ public class ControllerActions : MonoBehaviour
     // cube object to make teleport location
 	private	GameObject cube;
 
-    /* HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // public bird object
-    // public sound file (caw and flap)
-    */
+
+    public GameObject bird;
+    //public sound file (caw and flap)
+    public AudioSource caw;
+    public AudioSource flap;
 
     // bool for limiting teleportation, untested
     private bool canTP = true;
 
-    void bird()
+    public void birdMove()
     {
         canTP = false;
         // Position the bird over the user's position
+        Vector3 birdPos = transform.parent.position;
+        birdPos += new Vector3(0, 5f, 0);
 
-        // Play the audio file (caw) ...
-        // Pickup, caw, land, caw ...
-
-        // Pick up player
-        for(int i = 0; i < /* height */; ++i))
+        // Bird Caw's
+        caw.Play();
+        
+        // Bird Picks up player
+        for (float i = 0.5f; i < 10.5; i += 2)
         {
-            // thread.pause(milliseconds); ....
-            // flap sounds ...
-            // Raise user: transform.parent.position = cube.transform.position;
+            Thread.Sleep(500);
+            // Bird flaps
+            flap.Play();
+
+            // Raise bird
+            bird.transform.position += new Vector3(0, i, 0);
+            // Raise user:
+            transform.parent.position += new Vector3(0, i, 0);
         }
+
         // Fly player to the location
-        for (int i = 0; i < /* travel distance*/; ++i)
-        {
-            // flap sounds ...
-            // thread.pause(milliseconds); ...
-            // dynamically change player position and bird position ...
-            // Transport user: transform.parent.position = cube.transform.position;
-        }
+        //for (int i = 0; i < /* travel distance*/; ++i)
+        //{
+        // flap sounds ...
+        // thread.pause(milliseconds); ...
+        // dynamically change player position and bird position ...
+        // Transport user: transform.parent.position = cube.transform.position;
+        //}
+
         // Drop the player off
-        for (int i = /* height */; i >= 0; --i)
+        for (float i = 10.5f; i >= 0.5f; i -= 2)
         {
-            // flap sounds ...
-            // thread.pause(milliseconds); ...
-            // lower play and bird ...
-            // Lower user: transform.parent.position = cube.transform.position;
+            // bird flaps
+            flap.Play();
+
+            Thread.Sleep(500);
+
+            // Lower user:
+            transform.parent.position -= new Vector3(0, i, 0);
+
+            // Lower bird
+            bird.transform.position -= new Vector3(0, i, 0);
         }
-        // bird flys away ...
+        // bird flys away and caw's
+        caw.Play();
+
+        // Hide the bird
+        bird.transform.position = new Vector3(-2f, 10f, -30f);
     }
 
     private SteamVR_Controller.Device Controller
@@ -247,7 +267,7 @@ public class ControllerActions : MonoBehaviour
 			transform.parent.position = cube.transform.position;
 			Destroy (cube);
 
-            if(canTP == true) bird();
+            if(canTP == true) birdMove();
 			
 			canTP=true;
 		}
