@@ -46,73 +46,56 @@ public class ControllerActions : MonoBehaviour
 
     // bool for limiting teleportation, untested
     private bool canTP = true;
+	private bool isLowering = false;
+	private bool isRaising = true;
+	private bool isMoving = false;
+	private Vector3 origUser;
+	private Vector3 origBird;
+	private float distanceTraveledX;
+	private float distanceTraveledZ;
+	private float dx;
 
-    public void birdMove()
-    {
-        canTP = false;
-        // Position the bird over the user's position
-        Vector3 birdPos = transform.parent.position;
-        Vector3 userPos = transform.parent.position;
-        birdPos += new Vector3(0, 5f, 0);
+	private void raiseUser(Vector3 birdPos, Vector3 userPos)
+	{
+		// Bird flaps
+		flap.Play();
 
-        // Bird Caw's
-        caw.Play();
-        
-        // Bird Picks up player
-        for (float i = 0.5f; i < 9.5; i += 3)
-        {
-            Thread.Sleep(500);
-            // Bird flaps
-            flap.Play();
+		// Raise bird
+		bird.transform.position += new Vector3(0, .1f, 0);
+		// Raise user:
+		transform.parent.position += new Vector3(0, .1f, 0);
+	}
 
-            // Raise bird
-            bird.transform.position += new Vector3(0, i, 0);
-            // Raise user:
-            transform.parent.position += new Vector3(0, i, 0);
-        }
+	private void moveUser(Vector3 birdPos, Vector3 userPos, Vector3 destination)
+	{
+		// bird flaps
+		flap.Play();
 
-        // Get the travel distance
-        Vector3 destination = cube.transform.position;
+		// change player position
+		userPos.x += (destination.x - origUser.x)/100;
+		userPos.z += (destination.z - origUser.z)/100;
+		// change bird position in x and z direction
+		birdPos.x += (destination.x - origBird.x)/100;
+		birdPos.z += (destination.z - origBird.z)/100;
 
+		// Update user and bird positions
+		transform.parent.position = userPos;
+		bird.transform.position = birdPos;
 
-        // Fly player to the location in 5 iterations
-        for (float i = 5; i >= 1; --i)
-        {
-            // bird flaps
-            flap.Play();
-            Thread.Sleep(500);
-            // change player position
-            userPos.x = destination.x / i;
-            userPos.z = destination.z / i;
-            // change bird position in x and z direction
-            birdPos.x = destination.x / i;
-            birdPos.z = destination.z / i;
+		distanceTraveledX += Mathf.Abs(destination.x - origUser.x) / 100;
+		distanceTraveledZ += Mathf.Abs(destination.z - origUser.z) / 100;
+	}
 
-            // Update user and bird positions
-            transform.parent.position = userPos;
-            bird.transform.position = birdPos;
-        }
+	private void lowerUser(Vector3 birdPos, Vector3 userPos)
+	{
+		// Bird flaps
+		flap.Play();
 
-        // Drop the player off
-        for (float i = 9.5f; i >= 0.5f; i -= 3)
-        {
-            // bird flaps
-            flap.Play();
-
-            Thread.Sleep(500);
-
-            // Lower user:
-            transform.parent.position -= new Vector3(0, i, 0);
-
-            // Lower bird
-            bird.transform.position -= new Vector3(0, i, 0);
-        }
-        // bird flys away and caw's
-        caw.Play();
-
-        // Hide the bird
-        bird.transform.position = new Vector3(-.2f, 10, -30);
-    }
+		// Raise bird
+		bird.transform.position -= new Vector3(0, .1f, 0);
+		// Raise user:
+		transform.parent.position -= new Vector3(0, .1f, 0);
+	}
 
     private SteamVR_Controller.Device Controller
     {
@@ -221,6 +204,9 @@ public class ControllerActions : MonoBehaviour
     // Update is called once per frame
     void Update()
 	{
+		Vector3 birdPos = bird.transform.position;
+		Vector3 userPos = transform.parent.position;
+
     	// on grip press, select obejct to manipulate
 		if (Controller.GetPressDown(Valve.VR.EVRButtonId.k_EButton_Grip))
 		{
@@ -239,51 +225,101 @@ public class ControllerActions : MonoBehaviour
 			}
 		}
 
-		// on touch pad click right, scale held object up in size
-		if (Controller.GetAxis (Valve.VR.EVRButtonId.k_EButton_Axis0) [0] > 0.8f
-		   && Controller.GetPressDown (Valve.VR.EVRButtonId.k_EButton_SteamVR_Touchpad)) {
-			ScaleUp();
-		}
+		if (objectInHand) {
+			// on touch pad click right, scale held object up in size
+			if (Controller.GetAxis (Valve.VR.EVRButtonId.k_EButton_Axis0) [0] > 0.8f
+			   && Controller.GetPressDown (Valve.VR.EVRButtonId.k_EButton_SteamVR_Touchpad)) {
+				ScaleUp ();
+			}
 
-		// on touch pad click left, scale held object down in size
-		if (Controller.GetAxis (Valve.VR.EVRButtonId.k_EButton_Axis0) [0] < 0.8f
-			&& Controller.GetPressDown (Valve.VR.EVRButtonId.k_EButton_SteamVR_Touchpad)) {
-			print ("here2");
-			ScaleDown();
+			// on touch pad click left, scale held object down in size
+			if (Controller.GetAxis (Valve.VR.EVRButtonId.k_EButton_Axis0) [0] < 0.8f
+			   && Controller.GetPressDown (Valve.VR.EVRButtonId.k_EButton_SteamVR_Touchpad)) {
+				ScaleDown ();
+			}
 		}
 
 		// on trigger press, aim teleport
 		if (Controller.GetHairTriggerDown () ) {	//&& canTP
 
-            //canTP = false;
-            // creates vectors for moving position
-            Vector3 startPos = transform.position;
-			Vector3 endPos = startPos + transform.forward * 4f;
+			if (canTP == true) {
+				dx = 4f;
+				//canTP = false;
+				// creates vectors for moving position
+				Vector3 startPos = transform.position;
 
-			// creates object for cube to mark teleport location
-			cube = GameObject.CreatePrimitive (PrimitiveType.Cube);
+				// creates object for cube to mark teleport location
+				cube = GameObject.CreatePrimitive (PrimitiveType.Cube);
+				Vector3 endPos = startPos + transform.forward * dx;
 
-			// cube's scale and location
-			cube.transform.position = new Vector3(endPos[0],.5f,endPos[2]);
-			cube.transform.localScale = new Vector3 (.5f, .1f, .5f);
+				cube.transform.position = new Vector3 (endPos [0], .5f, endPos [2]);
+				cube.transform.localScale = new Vector3 (.5f, .1f, .5f);
 
-			// removes collision from cube
-			Destroy (cube.GetComponent<Rigidbody> ());
-			Destroy (cube.GetComponent<BoxCollider> ());
+				// removes collision from cube
+				Destroy (cube.GetComponent<Rigidbody> ());
+				Destroy (cube.GetComponent<BoxCollider> ());
 
-			// sets cubes color
-			cube.GetComponent<Renderer> ().material.color = Color.green;
+				// sets cubes color
+				cube.GetComponent<Renderer> ().material.color = Color.green;
+			}
 		}
 
 		// on trigger release teleport
-		if (Controller.GetHairTriggerUp ()) {
-			// move camera, delete cube
-			//transform.parent.position = cube.transform.position;
-			Destroy (cube);
+		if (Controller.GetHairTriggerUp ())
+		{
+			// bird and user positions
+			if (canTP == true) {
+				canTP = false;
 
-            if(canTP == true) birdMove();
-			
-			canTP=true;
+				birdPos = transform.parent.position;
+				birdPos.y += 2.5f;
+				origBird = birdPos;
+				bird.transform.position = birdPos;
+				origUser = userPos;
+
+				bird.transform.rotation = transform.parent.GetChild (2).rotation;
+				distanceTraveledX = 0f;
+				distanceTraveledZ = 0f;
+				caw.Play ();
+			}
+		}
+
+
+		if (canTP == false)
+		{
+			if (isRaising)
+			{
+				if (transform.parent.position.y < 9.5) {
+					flap.Play ();
+					raiseUser (birdPos, userPos);
+				} else {
+					isMoving = true;
+					isRaising = false;
+				}
+			} else if (isMoving)
+			{
+				if (distanceTraveledX < Mathf.Abs (cube.transform.position.x - origUser.x) && distanceTraveledZ < Mathf.Abs (cube.transform.position.z - origUser.z)) {
+					moveUser (birdPos, userPos, cube.transform.position);
+					flap.Play ();
+				}
+				else {
+					isMoving = false;
+					isLowering = true;
+				}
+			}
+			else if (isLowering)
+			{
+				if (userPos.y > 0.5) {
+					lowerUser (birdPos, userPos);
+				} else {
+					caw.Play ();
+					isLowering = false;
+					isRaising = true;
+					canTP = true;
+					Destroy (cube);
+					bird.transform.position = new Vector3 (-.2f, 10f, -30f);
+				}
+			}
 		}
     }
 }
